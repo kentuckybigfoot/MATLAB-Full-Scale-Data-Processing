@@ -51,6 +51,23 @@ boltEquation = 0;
 gaugeLength = [0.19685; 0.19685]; %(in) which is 5 mm
 gaugeWidth  = [0.0590551; 0.19685]; %(in) which is 1.5 mm
 
+wp11Location = [];
+wp12Location = [];
+wp21Location = [];
+wp22Location = [];
+wp31Location = [];
+wp32Location = [];
+wp41Location = [];
+wp42Location = [];
+wp51Location = [];
+wp61Location = [];
+wp62Location = [];
+
+wpLocations = [];
+
+wpTriangleDistances = [];
+
+
 if ProcessShearTab == '2' || ProcessShearTab == '4'
     stMidHeight = 5.75;
     yGaugeLocations = [4.5; 1.5; -1.5; -4.5; -10];
