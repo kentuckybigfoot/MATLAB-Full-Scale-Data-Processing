@@ -172,33 +172,60 @@ if ProcessWPHeights == true
     end
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%CALCULATE ROTATION USING WIREPOT DATA                                    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ProcessBeamRotation == true
-    beamInitialAngle1 = wpAngles(1,3);
-    beamInitialAngle2 = wpAngles(1,6);
-    beamInitialAngle3 = wpAngles(1,9);
+    %Define initial gamma angle to compare again.
+    beamInitialAngle1 = wpAngles(1,3); %Initial angle top of beam
+    beamInitialAngle2 = wpAngles(1,6); %Initial angle bot of beam
+    beamInitialAngle3 = wpAngles(1,9); %Initial angle of pivot rod
     
+    %For progress updates
     reverseStr = '';
-    m11 = (wp(1,2)*sin(wpAngles(1,5)) - 0)/(wp(1,2)*cos(wpAngles(1,5)) - 5.75);
-    m12 = (wp(1,6)*sin(wpAngles(1,8)) - 0)/(wp(1,2)*cos(wpAngles(1,8)) - 2);
     
-    for i = 1:1:size(wp,1)
+    %Determine the initial slope of the triangles' median (midpoint of
+    %length c to vertex C). This is done so that later the current slope
+    %can be found and relating slope to tangent the change in angle during
+    %rotation can be determined.
+    
+    %Slope for top of the beam
+    m11 = (wp(1,7)*sin(wpAngles(1,2)) - 0)/(wp(1,7)*cos(wpAngles(1,2)) - 5.625);
+    
+    %Slope for bottom of the beam
+    m12 = (wp(1,2)*sin(wpAngles(1,5)) - 0)/(wp(1,2)*cos(wpAngles(1,5)) - 5.75);
+    
+    %Slope for wirepots at the pivot rod.
+    m13 = (wp(1,6)*sin(wpAngles(1,8)) - 0)/(wp(1,6)*cos(wpAngles(1,8)) - 2);
+    
+    for i = 1:1:size(wp,1
+        %Compare current angle between sides a & b (angle gamma) to the
+        %initial angle.
         beamRotation(i,1) = abs(wpAngles(i, 3) - beamInitialAngle1);
         beamRotation(i,2) = abs(wpAngles(i, 6) - beamInitialAngle2);
         beamRotation(i,3) = abs(wpAngles(i, 9) - beamInitialAngle3);
         
-        m21 = (wp(i,2)*sin(wpAngles(i,5)) - 0)/(wp(i,2)*cos(wpAngles(i,5)) - 5.75);
-        m22 = (wp(i,6)*sin(wpAngles(i,8)) - 0)/(wp(i,2)*cos(wpAngles(i,8)) - 2);
+        %Current slope of the triangle median for the top of the beam,
+        %bottom of the beam, and pivot rod, respectively.
+        m21 = (wp(i,7)*sin(wpAngles(i,2)) - 0)/(wp(i,7)*cos(wpAngles(i,2)) - 5.625);
+        m22 = (wp(i,2)*sin(wpAngles(i,5)) - 0)/(wp(i,2)*cos(wpAngles(i,5)) - 5.75);
+        m23 = (wp(i,6)*sin(wpAngles(i,8)) - 0)/(wp(i,2)*cos(wpAngles(i,8)) - 2);
         
-        beamRotation(i,4) = atan2((m11 - m21),(1 + m11*m21));
+        %Calculate the angle between the initial and current median for the
+        %top of the beam, bottom of the beam, and pivot rod, respectively.
+        beamRotation(i,4) = atan2((m12 - m22),(1 + m12*m22));
         beamRotation(i,5) = atan2((m12 - m22),(1 + m12*m22));
+        beamRotation(i,6) = atan2((m13 - m23),(1 + m13*m23));
         
+        %Progress indicator. atan2 take considerable time to execute and
+        %this give me a hint of how close to being finished matlab is.
         percentDone = 100 * i / size(wp,1);
         msg = sprintf('Percent done: %3.1f', percentDone);
         fprintf([reverseStr, msg]);
         reverseStr = repmat(sprintf('\b'), 1, length(msg));
     end
     
-
+    clearvars m11 m12 m13 m21 m22 m23 beamInitialAngle1 beamInitialAngle2 beamInitialAngle3 reverseStr percentDone msg;
     disp('Beam rotations calculated.. Appending to data file.');
     if localAppend == true
         save(ProcessFileName, 'beamResultants', 'beamAngles', 'beamAnglesDeg', 'beamAngleDiff', 'beamAngleDiffDeg', 'beamAngleCenterChange', 'beamRotation', 'beamRotationDeg', '-append');
