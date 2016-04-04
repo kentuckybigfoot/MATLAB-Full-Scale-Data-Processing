@@ -22,51 +22,15 @@ ProcessBeamRotation          = true;
 ProcessStrainProfiles        = true;
 ProcessCenterOfRotation      = false;
 ProcessForces                = true;
-ProcessMoments               = false;
+ProcessMoments               = true;
 ProcessGarbageCollection     = false;
 ProcessOutputPlots           = false;
 
-%{
-ProcessStrainBolt      = true; %Not implemented yet
-ProcessConsolidateSGs  = true;
-ProcessConsolidateWPs  = true;
-ProcessConsolidateLCs  = true;
-ProcessSmoothSGs       = true;
-ProcessSmoothWPs       = true;
-ProcessSmoothLCs       = true; %Don't believe this should be done.
-ProcessOffsetSGs       = true;
-ProcessOffsetWPs       = true;
-ProcessOffsetLCs       = true;
-ProcessWPAngles        = true; %Don't forget to set distances between WPs
-ProcessConsolidateWPAngles = true;
-ProcessWPHeights       = true;
-ProcessStresses        = true;
-ProcessBeamRotation    = true;
-ProcessStressStrainProfiles  = true;
-ProcessOutputPlots    = true;
-%}
 %Constants
 modulus = 29000; %Modulus of elasticity (ksi)
 boltEquation = 0;
 gaugeLength = [0.19685; 0.19685]; %(in) which is 5 mm
 gaugeWidth  = [0.0590551; 0.19685]; %(in) which is 1.5 mm
-
-wp11Location = [];
-wp12Location = [];
-wp21Location = [];
-wp22Location = [];
-wp31Location = [];
-wp32Location = [];
-wp41Location = [];
-wp42Location = [];
-wp51Location = [];
-wp61Location = [];
-wp62Location = [];
-
-wpLocations = [];
-
-wpTriangleDistances = [];
-
 
 if ProcessShearTab == '2' || ProcessShearTab == '4'
     stMidHeight = 5.75;
@@ -120,12 +84,6 @@ if ProcessConsolidateWPs == true
     end
     disp('File successfully appended.');
 end
-
-%{
-for p = 1:size(strainRegression,1)
-    rootSolve(p,:) = roots([strainRegression(p,2) strainRegression(p,1)]);
-    end
-    %}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %CONSOLIDATE LOAD CELLS VARIABLES AND LOAD CELL GROUPS INTO SINGLE ARRAY  %
@@ -215,37 +173,36 @@ if ProcessWPHeights == true
 end
 
 if ProcessBeamRotation == true
-   %{
-    beamInitialResultant = sqrt(wpAngleHeight(1,1)^2 + wpAngleHeight(1,2)^2);
-    beamInitialAngle     = atan(wpAngleHeight(1,2)/wpAngleHeight(1,1));
-    beamInitialAngleDeg  = atand(wpAngleHeight(1,2)/wpAngleHeight(1,1));
-    beamInitialAngleDiff  = (pi/2)-((pi-(wpAngles(1,7)+(pi/2)))+(pi-(wpAngles(1,11)+(pi/2))));
-    beamInitialAngleDiffDeg  = 90-((180-(wpAnglesDeg(1,7)+90))+(180-(wpAnglesDeg(1,11)+90)));
+    beamInitialAngle1 = wpAngles(1,3);
+    beamInitialAngle2 = wpAngles(1,6);
+    beamInitialAngle3 = wpAngles(1,9);
+    
+    reverseStr = '';
+    m11 = (wp(1,2)*sin(wpAngles(1,5)) - 0)/(wp(1,2)*cos(wpAngles(1,5)) - 5.75);
+    m12 = (wp(1,6)*sin(wpAngles(1,8)) - 0)/(wp(1,2)*cos(wpAngles(1,8)) - 2);
     
     for i = 1:1:size(wp,1)
-        beamResultants(i,1) = sqrt(wpAngleHeight(i,3)^2 + wpAngleHeight(i,4)^2);
-        beamAngles(i,1)     = atan(wpAngleHeight(i,4)/wpAngleHeight(i,3)); %Angle of resultant at current position
-        beamAnglesDeg(i,1)  = atand(wpAngleHeight(i,4)/wpAngleHeight(i,3));
-        beamAngleDiff(i,1)  =((pi/2)-((pi-(wpAngles(i,7)+(pi/2)))+(pi-(wpAngles(i,11)+(pi/2)))))-beamInitialAngleDiff; %Angle between top of wirepot triangles
-        beamAngleDiffDeg(i,1)  = (90-((180-(wpAnglesDeg(i,7)+90))+(180-(wpAnglesDeg(i,11)+90))))-beamInitialAngleDiffDeg;
-        beamAngleCenterChange(i,1) = round(wp(i,5)*sind((180-(wpAnglesDeg(i,11)+90))),3);
-  
-        beamRotation(i,1) = beamAngles(i,1) - beamInitialAngle; %How much current beam resultant has shifted from original
-        beamRotationDeg(i,1) = beamRotation(i,1)*(180/pi());
+        beamRotation(i,1) = abs(wpAngles(i, 3) - beamInitialAngle1);
+        beamRotation(i,2) = abs(wpAngles(i, 6) - beamInitialAngle2);
+        beamRotation(i,3) = abs(wpAngles(i, 9) - beamInitialAngle3);
         
-        percentage = round((i/size(wp,1))*100,3);
-        if mod(percentage,2) == 0
-            disp([num2str(percentage),'% Complete Calculating Beam Angle Rotations'])
-        end
+        m21 = (wp(i,2)*sin(wpAngles(i,5)) - 0)/(wp(i,2)*cos(wpAngles(i,5)) - 5.75);
+        m22 = (wp(i,6)*sin(wpAngles(i,8)) - 0)/(wp(i,2)*cos(wpAngles(i,8)) - 2);
         
+        beamRotation(i,4) = atan2((m11 - m21),(1 + m11*m21));
+        beamRotation(i,5) = atan2((m12 - m22),(1 + m12*m22));
+        
+        percentDone = 100 * i / size(wp,1);
+        msg = sprintf('Percent done: %3.1f', percentDone);
+        fprintf([reverseStr, msg]);
+        reverseStr = repmat(sprintf('\b'), 1, length(msg));
     end
+    
+
     disp('Beam rotations calculated.. Appending to data file.');
     if localAppend == true
         save(ProcessFileName, 'beamResultants', 'beamAngles', 'beamAnglesDeg', 'beamAngleDiff', 'beamAngleDiffDeg', 'beamAngleCenterChange', 'beamRotation', 'beamRotationDeg', '-append');
     end
-    %}
-    
-    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -530,7 +487,7 @@ for s = 1:1:size(lcMod,1)
     mo(s,2) = lc2(s,7)*29.375 - lc2(s,6)*30.1875;
 end
 figure
-plot(offset(beamRotation), mo(:,1))
+plot(offset(beamRotation(:,3)), mo(:,2))
 grid on
 grid minor
 figure
