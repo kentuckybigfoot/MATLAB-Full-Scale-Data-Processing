@@ -8,6 +8,10 @@ function [ alpha beta gamma ] = lawOfCos(dist)
 % Note that name of wirepots is the grouping followed by the wirepot's
 % number in the group from right to left with the cylinder pointed upward.
 %
+% May consider transitioning to 
+% 2*asin(sqrt((dist(3)^2 - (dist(1) - dist(2))^2)/(4*dist(1)*dist(2))))
+% as found on https://www.cs.berkeley.edu/~wkahan/Triangle.pdf
+%
 %                          C
 %                         /\
 %                        / ?\
