@@ -5,7 +5,7 @@ clear
 format long;
 
 %Process Mode Variables
-ProcessFileName              = '[Filter]FS Testing - ST2 - Test 1 - 03-27-16.mat';
+ProcessFileName              = '..\[Filter]FS Testing - ST2 - Test 1 - 04-01-16.mat';
 ProcessRealName              = 'Full Scale Test';
 ProcessCodeName              = 'FST-ST2-Mar27-1';
 ProcessShearTab              = '2'; %1, 2, 3, or 4
@@ -14,7 +14,7 @@ localAppend                  = false;
 ProcessConsolidateSGs        = true;
 ProcessConsolidateWPs        = true;
 ProcessConsolidateLCs        = true;
-ProcessWPAngles              = true; %Don't forget to set distances between WPs
+ProcessWPAngles              = true;
 ProcessWPHeights             = true;
 processWPHeighDistances      = false;
 processWPCoordinates         = false;
@@ -96,19 +96,6 @@ if ProcessConsolidateSGs == true
     disp('File successfully appended.');
 end
 
-C = who;
-
-for r = 1:1:length(C)
-    tempVar = eval(C{r});
-    start = 1;
-    stop = 60000;
-    if size(tempVar,1) > 100000 
-        C{r}
-        eval(sprintf('%s(%d:%d,:) = [];',C{r}, start, stop));
-    end
-end
-clearvars tempVar start stop;
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %CONSOLIDATE WIRE POTENTIOMETER VARIABLES INTO SINGLE ARAY                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -174,6 +161,7 @@ if ProcessWPAngles == true
     end
     
     disp('Processing angles complete. Validating angles.')
+    %wpAnglesPass = [];
     
     for i = 1:1:length(wp)
         if round(wpAngles(i,1) + wpAngles(i,2) + wpAngles(i,3),4) ~= round(pi,4)
@@ -195,9 +183,8 @@ if ProcessWPAngles == true
     end
 
     if any(wpAnglesPass == 0)
-        disp('Error determining WP Angles with non offset data.');
-        wpAnglesPass
-        disp(num2str(i),' failed last')
+        disp('Error determining WP Angles with non offset data.')
+        %disp(num2str(i),' failed last')
     else
         disp('Angles using non offset data calculated successfully. Appending to file (if localAppend = true) and removing garbage.')
         clearvars wp1Angles wp2Angles wp3Angles wp4Angles wp1cDist wp2cDist wp3cDist wp4cDist wpAnglesPass
@@ -228,6 +215,7 @@ if ProcessWPHeights == true
 end
 
 if ProcessBeamRotation == true
+   %{
     beamInitialResultant = sqrt(wpAngleHeight(1,1)^2 + wpAngleHeight(1,2)^2);
     beamInitialAngle     = atan(wpAngleHeight(1,2)/wpAngleHeight(1,1));
     beamInitialAngleDeg  = atand(wpAngleHeight(1,2)/wpAngleHeight(1,1));
@@ -255,6 +243,9 @@ if ProcessBeamRotation == true
     if localAppend == true
         save(ProcessFileName, 'beamResultants', 'beamAngles', 'beamAnglesDeg', 'beamAngleDiff', 'beamAngleDiffDeg', 'beamAngleCenterChange', 'beamRotation', 'beamRotationDeg', '-append');
     end
+    %}
+    
+    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
